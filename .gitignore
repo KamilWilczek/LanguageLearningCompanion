@@ -1,6 +1,33 @@
-venv/
+# Python-related files
 __pycache__/
 *.pyc
 *.pyo
+venv/
+instance/*.db
 instance/
+
+# Node.js-related files
+node_modules/
+build/
+dist/
+.npm/
+yarn.lock
+npm-debug.log*
+
+# Logs
+*.log
+
+# IDE/Editor
+.vscode/
+.idea/
+
+# Environment variables
 .env
+
+# Test coverage output
+coverage/
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
