@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import Flashcard from './Flashcard';
+import { useNavigate } from 'react-router-dom';
 
 interface ReviewItem {
     id: number;
@@ -10,6 +11,7 @@ interface ReviewItem {
 
 const ReviewDashboard: React.FC = () => {
     const [reviewList, setReviewList] = useState<ReviewItem[]>([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchReviewItems = async () => {
@@ -47,6 +49,7 @@ const ReviewDashboard: React.FC = () => {
                 onRemembered={(remembered) => handleRemembered(item.id, remembered)}
                 />
             ))}
+            <button onClick={() => navigate('/add-vocabulary')}>Add New Word</button>
         </div>
     );
 };

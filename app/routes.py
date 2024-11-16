@@ -85,7 +85,6 @@ def review_vocabulary():
         db.session.query(Vocabulary, Progress)
         .join(Progress, Vocabulary.id == Progress.vocabulary_id)
         .filter(Progress.user_id == user_id)
-        # .filter(Progress.last_reviewed <= datetime.datetime.now() - datetime.timedelta(days=Progress.proficiency))
         .filter(func.julianday(now) - func.julianday(Progress.last_reviewed) >= Progress.proficiency)
         .order_by(Progress.proficiency)
         .all()
