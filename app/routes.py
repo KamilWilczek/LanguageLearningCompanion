@@ -1,19 +1,13 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, create_refresh_token
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User, Vocabulary, Progress
 from . import db
 import datetime
-# from datetime import datetime, timedelta
 from sqlalchemy import func
 
 
 api_bp = Blueprint("api", __name__)
-
-
-@api_bp.route("/api/test", methods=["GET"])
-def test_route():
-    return {"message": "Hello from Flask!"}
 
 
 @api_bp.route("/api/register", methods=["POST"])
@@ -34,9 +28,18 @@ def login():
     user = User.query.filter_by(email=data["email"]).first()
     if not user or not check_password_hash(user.password, data["password"]):
         return jsonify({"message": "Invalid credentials"}), 401
-    access_token = create_access_token(identity=user.id)
+    access_token = create_access_token(identity=user.id, expires_delta=datetime.timedelta(minutes=1))
+    refresh_token = create_refresh_token(identity=user.id)
 
-    return jsonify({"access_token": access_token}), 200
+    return jsonify({"access_token": access_token, "refresh_token": refresh_token}), 200
+
+@api_bp.route("/api/token/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh_token():
+    user_id = get_jwt_identity()
+    new_access_token = create_access_token(identity=user_id, expires_delta=datetime.timedelta(minutes=15))
+
+    return jsonify({"access_token": new_access_token}), 200
 
 
 @api_bp.route("/api/vocabulary", methods=["GET", "POST"])
@@ -63,16 +66,28 @@ def manage_vocabulary():
         return jsonify({"message": "Word added to vocabulary and progress initialized"}), 201
     
     elif request.method == "GET":
-        vocabulary = Vocabulary.query.filter_by(user_id=user_id).all()
+        page = request.args.get("page", 1, type=int)
+        size = request.args.get("size", 10, type=int)
 
-        return jsonify([
+        vocabulary_query = Vocabulary.query.filter_by(user_id=user_id)
+        total_items = vocabulary_query.count()
+        vocabulary = vocabulary_query.order_by(Vocabulary.id).paginate(page, size, False)
+
+        vocabulary_list = [
             {
                 "id": word.id,
                 "word": word.word,
                 "definition": word.definition,
                 "part_of_speech": word.part_of_speech
-            } for word in vocabulary
-        ]), 200
+            } for word in vocabulary.items
+        ]
+
+        return jsonify({
+            "vocabulary": vocabulary_list,
+            "total_items": total_items,
+            "page": page,
+            "size": size,
+        }), 200
 
 
 @api_bp.route("/api/vocabulary/review", methods=["GET"])

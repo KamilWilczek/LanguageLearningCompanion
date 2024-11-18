@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginUser, setAuthToken } from '../services/api';
+import { loginUser } from '../services/api';
 
 const Login: React.FC = () => {
     const [formData, setFormData] = useState({ email: '', password: ''});
@@ -15,11 +15,11 @@ const Login: React.FC = () => {
         e.preventDefault();
 
         try{
-            const response = await loginUser(formData.email, formData.password);
-            const token = response.data.access_token;
-            setAuthToken(token);
+            await loginUser(formData.email, formData.password);
+
             setMessage('Login successful!');
             navigate('/review')
+
         } catch (error: any) {
             setMessage(error.response?.data?.message || 'Login failed');
         }
