@@ -71,7 +71,7 @@ def manage_vocabulary():
 
         vocabulary_query = Vocabulary.query.filter_by(user_id=user_id)
         total_items = vocabulary_query.count()
-        vocabulary = vocabulary_query.order_by(Vocabulary.id).paginate(page, size, False)
+        vocabulary = vocabulary_query.order_by(Vocabulary.id).paginate(page=page, per_page=size, error_out=False)
 
         vocabulary_list = [
             {
@@ -95,22 +95,30 @@ def manage_vocabulary():
 def review_vocabulary():
     user_id = get_jwt_identity()
     now = datetime.datetime.now()
+    page = request.args.get("page", 1, type=int)
+    size = request.args.get("size", 5, type=int)
 
-    vocab_to_review = (
+    vocab_to_review_query = (
         db.session.query(Vocabulary, Progress)
         .join(Progress, Vocabulary.id == Progress.vocabulary_id)
         .filter(Progress.user_id == user_id)
         .filter(func.julianday(now) - func.julianday(Progress.last_reviewed) >= Progress.proficiency)
         .order_by(Progress.proficiency)
-        .all()
     )
+    total_items = vocab_to_review_query.count()
+    vocab_to_review = vocab_to_review_query.order_by(Vocabulary.id).paginate(page=page, per_page=size, error_out=False)
 
     review_list = [
         {"id": vocab.id, "word": vocab.word, "definition": vocab.definition, "part_of_speech": vocab.part_of_speech}
         for vocab, progress in vocab_to_review
     ]
 
-    return jsonify(review_list), 200
+    return jsonify({
+        "review_list": review_list,
+        "total_items": total_items,
+        "page": page,
+        "size": size,
+    }), 200
 
 
 @api_bp.route("/api/vocabulary/progress", methods=["POST"])

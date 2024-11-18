@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 interface VocabularyItem {
     id: number;
@@ -13,6 +14,7 @@ const VocabularyList: React.FC = () => {
     const [page, setPage] = useState(1);
     const [size] = useState(10);
     const [totalItems, setTotalItems] = useState(0);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchVocabulary = async () => {
@@ -43,6 +45,7 @@ const VocabularyList: React.FC = () => {
     return (
         <div>
             <h2>Vocabulary List</h2>
+            <button onClick={() => navigate('/review')}>Go to Review</button>
             <ul>
                 {vocabulary.map((item) => (
                     <li key={item.id}>
